@@ -1,79 +1,54 @@
-import { act } from 'react-dom/test-utils';
+import React from 'react';
 
-const CHANGE_INPUT = 'todos/CHANGE_INPUT'; // 인풋 값을 변경함
-const INSERT = 'todos/INSERT'; // 새로운 todo를 등록함
-const TOGGLE = 'todos/TOGGLE'; // todo를 체크/체크 해제함
-const REMOVE = 'todos/REMOVE'; // todo를 제거함
-
-export const changeInput = input => ({
-  type: CHANGE_INPUT,
-  input,
-});
-
-let id = 3; // insert가 호출될 때마다 1씩 더해집니다.
-
-export const insert = text => ({
-  type: INSERT,
-  todo: {
-    id: id++,
-    text,
-    done: false,
-  },
-});
-
-export const toggle = id => ({
-  type: TOGGLE,
-  id,
-});
-
-export const remove = id => ({
-  type: REMOVE,
-  id,
-});
-
-const initialState = {
-  input: '',
-  todos: [
-    {
-      id: 1,
-      text: '리덕스 기초 배우기',
-      done: true,
-    },
-    {
-      id: 2,
-      text: '리액트와 리덕스 사용하기',
-      done: false,
-    },
-  ],
+const TodoItem = ({ todo, onToggle, onRemove }) => {
+  return (
+    <div>
+      <input
+        type="checkbox"
+        onClick={() => onToggle(todo.id)}
+        checked={todo.done}
+        readOnly={true}
+      />
+      <span style={{ textDecoration: todo.done ? 'line-through' : 'none' }}>
+        {todo.text}
+      </span>
+      <button onClick={() => onRemove(todo.id)}>삭제</button>
+    </div>
+  );
 };
 
-function todos(state = initialState, action) {
-  switch (action.type) {
-    case CHANGE_INPUT:
-      return {
-        ...state,
-        input: action.input,
-      };
-    case INSERT:
-      return {
-        ...state,
-        todos: state.todos.concat(action.todo),
-      };
-    case TOGGLE:
-      return {
-        ...state,
-        todos: state.todos.map(todo =>
-          todo.id === action.id ? { ...todo, done: !todo.done } : todo,
-        ),
-      };
-    case REMOVE:
-      return {
-        ...state,
-        todos: state.todos.filter(todo => todo.id !== action.id),
-      };
-    default:
-      return state;
-  }
-}
+const Todos = ({
+  input, // 인풋에 입력되는 텍스트
+  todos, // 할 일 목록이 들어 있는 객체
+  onChangeInput,
+  onInsert,
+  onToggle,
+  onRemove,
+}) => {
+  const onSubmit = e => {
+    e.preventDefault();
+    onInsert(input);
+    onChangeInput(''); // 등록 후 인풋 초기화
+  };
+  const onChange = e => onChangeInput(e.target.value);
+  return (
+    <div>
+      <form onSubmit={onSubmit}>
+        <input value={input} onChange={onChange} />
+        <button type="submit">등록</button>
+      </form>
+      <div>
+        {todos.map(todo => (
+          <TodoItem
+            todo={todo}
+            key={todo.id}
+            onToggle={onToggle}
+            onRemove={onRemove}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
-export default todos;
+export default Todos;

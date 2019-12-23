@@ -67,4 +67,19 @@ mapStateToProps와 mapDispatchToProps에서 반환하는 객체 내부의 값들
 mapStateToProps는 state를 파라미터로 받아 오며, 이 값은 현재 스토어가 지니고 있는 상태를 가리킴
 mapDispatchToProps의 경우 store의 내장 함수 dispatch를 파라미터로 받아옴
 
-connect 함수를 사용할 때는 일반적으로 위 코드와 같이 mapStateToProps와 mapDispatchToProps를 미리 선언해 놓고 사용
+connect 함수를 사용할 때는 일반적으로 mapStateToProps와 mapDispatchToProps를 미리 선언해 놓고 사용
+
+컴포넌트에서 액션을 디스패치하기 위해 각 액션 생성 함수를 호출하고 dispatch로 감싸는 작업이 번거로울 수 있음
+이와 같은 경우에는 리덕스에서 제공하는 bindActionCreators 유틸 함수를 사용하면 간편
+
+더 편한 방법은 mapDispatchToProps에 해당하는 파라미터를 함수 형태가 아닌 액션 생성 함수로 이루어진 객체 형태로 전달
+두 번째 파라미터를 객체 형태로 전달하면 connect 함수가 내부적으로 bindActionCreators 작업을 대신 해줌
+
+## 5. 리덕스 더 편하게 사용하기
+
+액션 생성 함수, 리듀서를 작성할 때 redux-actions라는 라이브러리와 immer 라이브러리를 활용하면 리덕스를 훨씬 편하게 사용 가능
+
+1. redux-actions
+
+redux-actions를 사용하면 액션 생성 함수를 더 짧은 코드로 작성 가능
+리듀서 작성할 때 switch/case 문이 아닌 handleActions라는 함수를 사용하여 각 액션마다 업데이트 함수를 설정하는 형식으로 작성 가능
