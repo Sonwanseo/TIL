@@ -1,0 +1,14 @@
+{
+  "name": "Practice",
+  "version": "1.0.0",
+  "description": "hello package.json",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sonwanseo",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
