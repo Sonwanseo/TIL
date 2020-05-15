@@ -32,3 +32,30 @@ Google Places API를 사용하면 구글 지도와 구글 플러스가 사용하
 검색폼에는 submit 이벤트가 붙어 있습니다.
 검색어를 입력하지 않았다면 폼 요청을 하지 않습니다.
 검색어를 입력한 경우에는 폼 요청 주소(this.action)를 노드 라우터에 맞게 설정한 후, 폼 요청을 전송합니다.
+
+## 13.3 Google Maps API 사용하기
+
+Google Maps API는 클라이언트 API입니다.
+
+## 13.4 위치 기반 검색 수행하기
+
+Google Places API가 그리 정확한 결과를 반환하지는 않습니다.
+정확도를 높이기 위해 내 위치 주변을 검색하는 API와 특정 종류의 장소(카페, 병원 등)만 검색하는 API를 추가로 만들어보겠습니다.
+
+쿼리스트링으로 lat과 lng이 제공되면 places API 대신에 placesNearby API를 사용합니다.
+이 API의 옵션으로는 keyword, rankby, langauge, radius 등이 있습니다.
+keyword는 찾을 검색어, location 위도와 경도, rankby는 정렬 순서, language는 검색 언어를 의미합니다.
+radius는 인기순으로 정렬하고 싶을 때 검색 반경을 입력하는 용도로 사용됩니다.
+
+검색 결과를 좀 더 정확하게 만들고 싶다면 아예 장소의 종류까지 지정해주면 됩니다.
+places와 placesNear API의 옵션으로 type을 줄 수 있습니다.
+
+new google.maps.InfoWindow(옵션)이 정보창을 띄우는 코드입니다.
+옵션으로는 content가 있는데, 여기에 정보창 내용물을 넣어주면 됩니다.
+
+정보창 내용물로는 h1 태그와 button 태그를 넣어주었습니다.
+h1 태그에는 장소명을, button 태그에는 즐겨찾기 추가라는 텍스트를 표시하게 했고, 버튼을 눌렀을 경우 즐겨찾기 추가 라우터에 POST 요청을 보내도록 하였습니다.
+
+즐겨찾기 추가를 위한 POST /location/:id/favorite 라우터도 추가하였습니다.
+Favorite 스키마에 다큐먼트를 추가하는데, 장소를 넣을 때 경도, 위도순으로 넣어야 한다는 것에 주의하세요.
+Google Maps API를 사용할 때와 순서가 반대입니다.
