@@ -82,3 +82,66 @@ pm2 start app.js 대신에 pm2 start app.js -i 0 명령어를 사용합니다.
 
 현재 프로세스를 모니터링할 수도 있습니다.
 pm2 monit으로 가능합니다.
+
+### 15.1.6 winston
+
+실제 서버 운영 시 console.log와 console.error를 대체하기 위한 모듈입니다.
+
+console.log와 console.error를 사용하면 개발 중에는 편리하게 서버의 상황을 파악할 수 있지만, 실제 배포 시에는 사용하기 어렵습니다.
+console 객체의 메서드들이 언제 호출되었는지 파악하기 힘들 뿐만 아니라 서버가 종료되는 순간 로그들도 사라져 버리기 때문입니다.
+에러가 발생하면 에러 메시지를 확인해야 하는데, 서버가 종료되어서 에러 메시지들이 날아가 버리는 황당한 일이 일어나게 됩니다.
+이와 같은 상황을 방지하려면 로그를 파일이나 다른 데이터베이스에 저장해야 합니다.
+이때 winston을 사용합니다.
+
+winston 패키지의 createLogger 메서드로 logger를 만듭니다.
+인자로 logger에 대한 설정을 넣어줄 수 있습니다.
+설정으로는 level, format, transports 등이 있습니다.
+
+- level은 로그의 심각도를 의미합니다. error, warn, info, verbose, debug, silly가 있습니다.
+  심각도순(error가 가장 심각)이므로 위 순서를 참고하여 기록하길 원하는 유형의 로그를 고르면 됩니다.
+  info를 고른 경우, info보다 심각한 단계의 로그(error, warn)도 함게 기록됩니다.
+- format은 로그의 형식입니다.
+  json, label, timestamp, print, simple, combine 등의 다양한 형식이 있습니다.
+  기본적으로는 JSON 형식으로 기록하지만 로그 기록 시간을 표시하려면 timestamp를 쓰는 것이 좋습니다.
+  combine은 여러 형식을 혼합해서 사용할 때 씁니다.
+- transports는 로그 저장 방식을 의미합니다.
+  new transport.File은 파일로 저장한다는 뜻이고, new transports.Console은 콘솔에 출력한다는 뜻입니다.
+  여러 로깅 방식을 동시에 사용할 수도 있습니다.
+  배포 환경이 아닌 경우 파일뿐만 아니라 콘솔에도 출력하도록 되어있습니다.
+  이 메서드들에도 level, format 등을 설정할 수 있습니다.
+  new transports.File인 경우 로그 파일의 이름인 filename도 설정할 수 있습니다.
+
+winston-daily-rotate-file은 로그를 날짜별로 관리할 수 있게 해주는 패키지라 알아두면 좋습니다.
+
+### 15.1.7 helmet, hpp
+
+helmet과 hpp는 서버의 각종 취약점을 보완해주는 패키지들입니다.
+익스프레스 미들웨어로서 사용할 수 있습니다.
+이 패키지를 사용한다고 해서 모든 취약점을 방어해주는 것은 아니므로 서버를 운영할 때는 주기적으로 취약점을 점검해야 합니다.
+
+### 15.1.8 connet-redis
+
+멅리 프로세스 간 세션 공유를 위해 레디스와 익스프레스를 연결해주는 패키지입니다.
+
+connet-redis 패키지로부터 RedisStore 객체를 require합니다.
+connet-redis는 express-session에 의존성이 있습니다.
+
+RedisStore의 옵션으로 .env에 저장했던 값들을 사용합니다.
+host, port, pass를 차례대로 넣어주면 됩니다.
+logErrors 옵션은 레디스에 에러가 났을 때 콘솔에 표시할지를 결정하는 옵션입니다.
+
+### 15.1.9 nvm, n
+
+노드 버전을 업데이트하기 위한 패키지입니다.
+
+#### 15.1.9.1 윈도
+
+새로운 버전을 설치하고 싶다면 nvm install [버전]을 입력합니다.
+
+설치된 버전을 사용하려면 nvm use [버전명]을 입력합니다.
+
+#### 15.1.9.2 맥, 리눅스
+
+맥과 리눅스에서는 n 패키지를 사용하면 편리합니다.
+
+새로운 버전을 설치하고 싶다면 n 버전을 입력합니다.
