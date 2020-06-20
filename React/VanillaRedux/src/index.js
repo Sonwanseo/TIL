@@ -6,13 +6,18 @@ const number = document.querySelector("span");
 
 number.innerText = 0;
 
+const Add = "Add";
+const Minus = "Minus";
+
 const countModifier = (count = 0, action) => {
-  if (action.type === "Add") {
-    return count + 1;
-  } else if (action.type === "Minus") {
-    return count - 1;
+  switch (action.type) {
+    case Add:
+      return count + 1;
+    case Minus:
+      return count - 1;
+    default:
+      return count;
   }
-  return count;
 };
 
 const countStore = createStore(countModifier);
