@@ -215,3 +215,21 @@ myArray[3]; // "baz"
 
 
 자바스크립트를 처음 시작하는 개발자가 가장 흔히 고민하는 문제 중 하나
+
+```javascript
+function anotherFunction() {
+	...
+}
+var anotherObject = {
+	c: true
+}
+var anotherArray = [];
+var myObject = {
+	a: 2,
+	b: anotherObject, // 사본이 아닌 레퍼런스
+	c: anotherArray, // 레퍼런스
+	d: anotherFunction
+};
+anotherArray.push(anotherObject, myObject);
+```
+
