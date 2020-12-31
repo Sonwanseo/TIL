@@ -233,3 +233,64 @@ var myObject = {
 anotherArray.push(anotherObject, myObject);
 ```
 
+객체를 복사하려면 얕은 복사와 깊은 복사 중 한 가지의 방법을 정해야 함
+깊은 복사를 하면 환형 참조 형태가 되어 무한 복사가 발생한다.
+
+한편, 얕은 복사는 이해하기 쉽고 별다른 이슈가 없기에 ES6부터는 Object.assign() 메서드를 제공
+이 메서드의 첫째 인자는 타깃 객체고 둘째 인자 이후는 하나 또는 둘 이상의 소스 객체로, 소스 객체의 모든 열거 가능한 것과 보유 키를 순회하면서 타깃 객체로 복사
+
+```javascript
+var newObj = Object.assign({}, myObject);
+newObj.a; // 2
+newObj.b === anotherObject; // true
+newObj.c === anotherArray; // true
+newObj.d === anotherFunction; // true
+```
+
+### 3.3.5 프로퍼티 서술자
+
+ES5 이전에는 읽기 전용과 같은 프로퍼티의 특성을 자바스크립트 코드로 직접 구별하거나 확인할 방법이 없었음
+하지만 ES5부터 모든 프로퍼티는 프로퍼티 서술자로 표현됨
+
+```javascript
+var myObject = {
+	a: 2
+};
+Object.getOwnPropertyDescriptor(myObject, "a");
+// {
+// value: 2,
+// writable: true,
+// enumerable: true,
+// configurable: true
+// }
+```
+
+평범한 객체 프로퍼티 a의 프로퍼티 서술자를 조회해보니 writable, enumerable, configurable의 세 가지 특성이 존재
+
+이렇게 프로퍼티 생성 시 프로퍼티 서술자에 담긴 기본 특성값을 확인할 수 있는데, Object.defineProperty()로 새로운 프로퍼티를 추가하거나 기존 프로퍼티의 특성을 원하는 대로 수정할 수 있음
+
+##### 쓰기 기능
+
+프로퍼티 값의 쓰기 가능 여부는 writable로 조정
+
+쓰기 금지된 값을 수정하려고 하면 조용히 실패하며 엄격 모드에선 에러가 남
+
+##### 설정 가능
+
+프로퍼티가 설정 가능하면 defineProperty()로 프로퍼티 서술자 변경 가능
+
+***미묘한 예외 상황도 존재. 이미  configurable: false인 프로퍼티라도 writable은 true에서 false로 에러 없이 변경이 가능함. But, 이 또한 한번 false가 되면 다시는 true로 되돌릴 수 없음***
+
+configurable: false로 설정하면 이미 delete 연산자로 존재하는 프로퍼티 삭제도 금지됨
+
+delete는 객체에서 프로퍼티를 곧바로 삭제하는 용도로만 사용됨
+그런데 이 프로퍼티가 어떤 객체/함수를 가리키는 마지막 레퍼런스면 레퍼런스가 삭제되면서 결국 이 객체/함수는 아무것도 참조하지 않게 되어 가비지 컬렉션의 대상이 됨
+
+##### 열거 가능성
+
+enumerable은 for...in 루프처럼 객체 프로퍼티를 열거하는 구문에서 해당 프로퍼티의 표출 여부를 나타냄
+enumerable:l false로 지정된 프로퍼티는 접근할 수는 있지만 루프 구문에서 감춰짐
+물론 true로 바꾸면 다시 모습을 드러냄
+
+보통 사용자 정의 프로퍼티는 enumerable: true가 기본값이어서 열거가 가능
+감추고 싶은 특별한 프로퍼티에 한하여 enumberable: false 설정
