@@ -294,3 +294,205 @@ enumerable:l false로 지정된 프로퍼티는 접근할 수는 있지만 루�
 
 보통 사용자 정의 프로퍼티는 enumerable: true가 기본값이어서 열거가 가능
 감추고 싶은 특별한 프로퍼티에 한하여 enumberable: false 설정
+
+### 3.3.6 불변성
+
+프로퍼티/객체가 변경되지 않게 해야 할 경우가 있음
+ES5부터는 이런 처리를 할 수 있는 다양한 방법 제공
+But, 이러한 방법은 얕은 불변성만 지원
+즉, 객체 자신과 직속 프로퍼티 특성만 불변으로 만들 뿐 다른 객체를 가리키는 레퍼런스가 있을 때 해당 객체의 내용까지 불변으로 만들지는 못함
+
+***자바스크립트에서 뼛속까지 고정된 불변 객체를 쓸 일은 거의 없음. 필요한 경우도 있겠지만 객체를 봉인 또는 동결해야 하는 상황이라면 객체 값이 변경되어도 문제가 없는 견고한 프로그램을 설계한 다른 방법은 없는지 일반적인 디자인 패턴 관점에서 재고해야 함***
+
+##### 객체 상수
+
+writable: false와 configurable: false를 같이 쓰면 객체 프로퍼티를 상수처럼 쓸 수 있음
+
+##### 확장 금지
+
+객체에 더는 프로퍼티를 추가할 수 없게 차단하고 현재 프로퍼티는 있는 그대로 놔두고 싶을 때 Object.perventExtensions()를 호출
+
+##### 봉인
+
+Object.seal()는 봉인된 객체 생성
+즉, 어떤 객체에 대해 Object.preventExtensions()를 실행하고 프로퍼티를 전부 configurable: false 처리
+결과적으로는 더는 프로퍼티를 추가할 수 없을 뿐더러 기존 프로퍼티를 재설정하거나 삭제할 수 없다
+값은 변경 가능
+
+##### 동결
+
+Object.freeze()는 객체를 동결시킴
+Object.seal()을 적용하고 '데이터 접근자' 프로퍼티를 모두 writable: false 처리해서 값도 변경 불가
+
+동결은 가장 높은 단계의 불변성을 적용한 것으로 객체와 직속 프로퍼티에 어떤 변경도 원천 봉쇄함
+
+Object.freeze()를 적용하면 지금까지는 전혀 영향을 받지 않았던 해당 객체가 참조하는 모든 객체를 재귀 순회하며 Object.freeze()를 적용하여 깊숙이 동결함
+
+### 3.3.7 [[Get]]
+
+```javascript
+var myObject = {
+	a: 2
+};
+myObject.a; // 2
+```
+
+myObject.a는 누가 봐도 프로퍼티 접근이지만  a란 이름의 프로퍼티를 myObject에서 찾지 않음
+명세에 따르면 실제로 이 코드는 myObject에 대해 [[Get]] 연산을 함
+
+기본적으로 [[Get]] 연산은 주어진 이름의 프로퍼티를 먼저 찾아보고 있으면 그 값을 반환
+
+주어진 프로퍼티 값을 어떻게 해도 찾을 수 없으면 [[Get]] 연산은 undefined를 반환
+
+식별자명으로 변수를 참조할 때는 작동 방식이 다름
+해당하는 렉시컬 스코프 내에 없는 변수를 참조하면 객체 프로퍼티처럼 undefined가 반환되지 않고 ReferenceError가 발생
+
+### 3.3.8 [[Put]]
+
+[[Put]]을 실행하면 주어진 객체에 프로퍼티가 존재하는지 등 여러 가지 요소에 따라 이후 작동 방식이 달라짐
+[[Put]] 알고리즘은 이미 존재하는 프로퍼티에 대해 대략 다음의 확인 절차를 밟음
+
+1. 프로퍼티가 접근 서술자인가? 맞으면 세터를 호출
+2. 프로퍼티가 writable: false인 데이터 서술자인가? 맞으면 비엄격 모드에서 조용히 실패하고 엄격 모드는 TypeError가 발생
+3. 이외에는 프로퍼티에 해당 값을 세팅
+
+객체에 존재하지 않는 프로퍼티라면 [[Put]] 알고리즘은 훨씬 더 미묘하고 복잡해짐
+
+### 3.3.9 게터와 세터
+
+[[Put]]과 [[Get]] 기본 연산은 이미 존재하거나 전혀 새로운 프로퍼티에 값을 세팅하거나 기존 프로퍼티로부터 값을 조회하는 역할을 각각 담당함
+
+***차후에 자바스크립터 언어가 아주 고도화되면 프로퍼티는 물론이고 모든 객체의 기본 [[Get]]/[[Put]] 연산을 오버라이드하는 것도 가능할 것이다.***
+
+ES5부터는 게터/세터를 통해 프로퍼티 수준에서 이러한 기본 로직을 오버라이드할 수 잇음
+게터/세터는 각각 실제로 값을 가져오는/세팅하는 감춰진 함수를 호출하는 프로퍼티임
+
+프로펕피가 게터 또는 세터 어느 한쪽이거나 동시에 게터/세터가 될 수 있게 정의한 것을 '접근 서술자'라고 함
+접근 서술자에서는 프로퍼티의 값과 writable 속성은 무시되며 대신 프로퍼티의 겟/셋 속성이 중요함
+
+```javascript
+var myObject = {
+	// 'a'의 게터를 정의한다.
+	get a() {
+		return 2;
+	}
+};
+Object.defineProperty(
+	myObject, // 타깃
+	"b", // 프로퍼티명
+	{ // 서술자
+		// 'b'의 게터를 정의한다.
+		get: function() { return this.a * 2 },
+		
+		// 'b'가 객체 프로퍼티로 확실히 표시되게 한다.
+		enumerable: true
+	}
+);
+myObject.a; // 2
+myObject.b; // 4
+```
+
+get a() { } 처럼 리터럴 구문으로 기술하든, defineProperty()로 명시적 정의를 내리든 실제로 값을 가지고 있지 않은 객체에 프로퍼티를 생성하는 건 같지만 프로퍼티에 접근하면 자동으로 게터 함수를 은밀하게 호출하여 어떤 값이라도 게터 함수가 반환한 값이 결괏값이 된다.
+
+```javascript
+var myObject = {
+	// 'a'의 게터를 정의한다.
+	get a() {
+		return 2;
+	}
+};
+myObject.a = 3;
+myObject.a; // 2
+```
+
+a의 게터가 정의되어 있으므로 할당문으로 값을 세팅하려고 하면 에러 없이 조용히 무시됨
+세터가 있어도 커스텀 게터가 2만 반환하게 하드 코딩되어 있어서 세팅은 무의미
+
+프로퍼티 단위로 기본 [[Put]] 연산을 오버라이드하는 세터가 정의되어야 함
+게터와 세터는 항상 둘 다 선언하는 것이 좋음
+
+### 3.3.10 존재 확인
+
+객체에 어떤 프로퍼티가 존재하는지는 굳이 프로퍼티 값을 얻지 않고도 확인 가능
+
+```javascript
+var myObject = {
+	a: 2
+};
+
+("a" in myObject); // true
+("b" in myObject); // false
+
+myObject.hasOwnProperty("a"); // true
+myObject.hasOwnProperty("b"); // false
+```
+
+in 연산자는 어떤 프로퍼티가 해당 객체에 존재하는지 아니면 이 객체의 [[Prototype]] 연쇄를 따라갔을 때 상위 단계에 존재하는지 확인함
+이와 달리 hasOwnProperty()는 단지 프로퍼티가 객체에 있는지만 확인하고 [[Prototype]] 연쇄는 찾지 않음
+
+거의 모든 일반 객체는 Object.prototype 위임을 통해 hasOwnProperty()에 접근이 가능하지만 간혹 Object.prototype과 연결되지 않은 객체는 myObject.hasOwnProperty() 처럼 사용할 수 없음
+
+이럴 경우엔 Object.prototype.hasOwnProperty.call(myObject, "a")처럼 기본 hasOwnProperty() 메서드를 빌려와 myObject에 대해 명시적으로 바인딩하면 좀 더 확실하게 확인 가능
+
+***언뜻 in 연산자가 내부 값이 존재하는지까지 확인하는 것처럼 보이지만 실은 프로퍼티명이 있는지만 본다. 그러므로 배열에서 4 in [2,4, 6]처럼 써도 예상대로 실행되지 않는데, 이러한 차이점을 숙지하고 있어야 실수하지 않는다.***
+
+##### 열거
+
+```javascript
+var myObject = { };
+Object.defineProperty(
+	myObject,
+    "a",
+    // 'a'를 열거가 가능하게 세팅한다(기본값이다).
+    { enumerable: true, value: 2 }
+);
+Object.defineProperty(
+	myObject,
+	"b",
+	// 'b'를 열거가 불가능하게 세팅한다.
+	{ enumerable: false, value: 3 }
+);
+myObject.b; // 3
+("b" in myObject); // true
+myObject.hasOwnProperty("b"); // true
+
+for(var k in myObject) {
+	console.log(k, myObject[k]);
+}
+// "a" 2
+```
+
+myObject.b는 실제 존재하는 프로퍼티로 그 값에도 접근할 수 있지만, for...in 루프에서는 접근 불가
+이처럼 '열거 가능'하다는 건 기본적으로 '객체 프로퍼티 순회 리스트에 포함'된다는 뜻
+
+***for...in 루프를 배열에 사용하면 배열 인덱스뿐만 아니라 다른 열거 가능한 프로퍼티까지 순회 리스트에 포함되는 원치 않은 결과가 발생할 수 있다. for...in는 객체에만 쓰고 배열은 과거처럼 숫자 인덱스로 순회하는 편이 바람직하다.***
+
+```javascript
+var myObject = { };
+Object.defineProperty(
+	myObject,
+	"a",
+	// 'a'를 열거가 가능하게 세팅한다(기본값이다).
+	{ enumerable: true, value: 2 }
+);
+Object.defineProperty(
+	myObject,
+	"b",
+	// 'b'를 열거가 불가능하게 세팅한다.
+	{ enumerable: false, value: 3 }
+);
+
+myObject.propertyIsEnumerable("a"); // true
+myObject.propertyIsEnumerable("b"); // false
+
+Object.keys(myObject); // ["a"]
+Object.getOwnPropertyNames(myObject); // ["a", ["b"]
+```
+
+propertyIsEnumerable()은 어떤 프로퍼티가 해당 객체의 직속 프로퍼티인 동시에 enumerable: true인지 검사
+Object.keys()는 Object.getOwnPropertyNames()의 열거 가능 여부와 상관없이 객체에 있는 모든 열거 가능한 프로퍼티를 배열 형태로 반환함
+
+in과 hasOwnProperty()가 [[Prototype]] 연쇄의 확인에 따라 차이가 있는 반면, Object.keys()와 Object.getOwnPropertyNames()는 모두 주어진 객체만 확인함
+
+in 연산자와 결과가 동등한 프로퍼티 전체 리스트를 조회하는 기능은 없음
+단계마다 Object.keys()에서 열거 가능한 프로퍼티 리스트를 포착하여 재귀적으로 주어진 객체의 [[Prototype]] 연쇄를 순회하는 식의 로직을 구현하여 대략 비슷한 유틸리티를 만들어 쓰면 됨
