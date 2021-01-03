@@ -498,3 +498,97 @@ in 연산자와 결과가 동등한 프로퍼티 전체 리스트를 조회하�
 단계마다 Object.keys()에서 열거 가능한 프로퍼티 리스트를 포착하여 재귀적으로 주어진 객체의 [[Prototype]] 연쇄를 순회하는 식의 로직을 구현하여 대략 비슷한 유틸리티를 만들어 쓰면 됨
 
 ## 3.4 순회
+
+for...in 루프는 열거 가능한 객체 프로퍼티를 차례로 순회
+
+```javascript
+var myArray = [1, 2, 3];
+for(var i = 0; i < myArray.length; i++) {
+	console.log(myArray[i]);
+}
+// 1 2 3
+```
+
+위 코드는 인덱스를 순회하면서 해당 값을 사용할 뿐 값 자체를 순회하는 것은 아님
+
+ES5부터는 forEach(), every(), some() 등의 배열 관련 순회 헬퍼가 도입됨
+이 함수들은 배열의 각 원소에 적용할 콜백 함수를 인자로 받으며, 원소별로 반환 값을 처리하는 로직만 다름
+
+forEach()는 배열 전체 값을 순회하지만 콜백 함수의 반환 값은 무시
+every()는 배열 끝까지 또는 콜백 함수가 false를 반환할 때까지 순회하며 some()은 이와 정반대로 배열 끝까지 또는 콜백 함수가 true를 반환할때까지 순회함
+every()와 some()의 이러한 특별한 반환 값은 일반적인 for 루프의 break 문처럼 끝까지 순회하기 전에 일찌감치 순회를 끝내는 게 쓰임
+
+for...in 루프를 이용한 객체 순회는 실제로 열거 가능한 프로퍼티만 순회하고 그 값을 얻으려면 일일이 프로퍼티에 접근해야 하므로 간접적인 값 추출임
+
+ES6부터 배열 순회용 for...of 구문을 제공함
+
+```javascript
+var myArray = [1, 2, 3];
+for(var v of myArray) {
+	console.log(v);
+}
+// 1
+// 2
+// 3
+```
+
+for...of 루프는 순회할 원소의 순회자 객체가 있어야 함
+순회당 한 번씩 이 순회자 객체의 next() 메서드를 호출하여 연속적으로 반환 값을 순회함
+
+배열은 @@iterator가 내장된덕분에 손쉽게 for...of 루르 사용 가능
+
+```javascript
+var myArray = [1, 2, 3];
+var it = myArray[Symbol.iterator]();
+
+it.next(); // { value: 1, done: false }
+it.next(); // { value: 2, done: false }
+it.next(); // { value: 3, done: false }
+it.next(); // { done: true }
+```
+
+***ES6부터는 Symbol.iterator 심볼로 객체 내부 프로퍼티인 @@iterator에 접근할 수 있다. 이런 특수 프로퍼티는 심볼에 포함될지 모를 특수값보다는 심볼명으로 참조하는 것이 좋다. @@iterator라는 명칭 때문에 순회자 객체란 느낌이 강한데 실은 순회자 객체를 반환하는 함수이다.***
+
+for...of 루프에서 매번 myObject의 순회자 객체에 next()를 호출하면 내부 포인터는 하나씩 증가하면서 객체 프로퍼티 목록의 다음 값을 반환
+
+순회가 절대로 끝나지 않고 항상 새로운 값을 반환하는 무한 순회자도 가능
+하지만 이렇게 순회자로 for...of 루프의 경계를 무너뜨리면 결국 실행이 멈추지 않아 프로그램이 멎을 수 있으니 별로 사용할 일은 없음
+
+```javascript
+var randoms = {
+	[Symbol.iterator]: function() {
+		return {
+			next: function() {
+				return { value: Math.random() };
+			}
+		}
+	}
+};
+
+var randoms_pool = [];
+for(var n of randoms) {
+	randoms_pool.push(n);
+	
+	// 제한 없이 사용한다.
+	if (randoms_pool.length === 100) break;
+}
+```
+
+## 3.5 정리하기
+
+자바스크립트 객체는 리터럴 형식과 생성자 형식 두 가지 형태를 가짐
+대부분 리터럴 형식을 쓰는 편이 좋지만 생성 시 옵션을 더 주기 위해 생성자 형식을 쓰는 경우도 존재
+
+많은 사람이 "자바스크립트는 모든 것이 다 객체다"라고 말하지만 사실과 다름
+객체는 6개의 원시 타입 중 하나고 함수를 비롯한 하위 타입이 존재
+이를테면 내부적으로 [object Array]라는 레이블로 표시되는 배열 객체라는 독특한 하위 타입도 가능
+
+객체는 키/값의 쌍을 모아 놓은 저장소고 값은 프로퍼티를 통해 접근 가능
+프로퍼티에 접근하면 엔진 내부에서는 실제로 기본 [[Get]] 연산을 호출하는데, 객체 자체에 포함된 프로퍼티뿐만 아니라 필요하면 [[Prototype]] 연쇄를 순회하며 찾아봄
+
+프로퍼티는 프로퍼티 서술자를 통해 제어 가능한 wrirable, configurable 등의 특정한 속성을 지님
+그리고 객체는 Object.preventExtensions(), Object.seal(), Object.freeze() 등을 이용하여 자신에게 여러 단계의 불변성 적용 가능
+
+프로퍼티가 반드시 값을 가져야 하는 것은 아니며 게터/세터로 '접근자 프로퍼티' 형태를 취할 수도 있음
+
+ES6부터는 for...of 구문에서 한 번에 하나씩 다음 데이터 값으로 이동하는 next() 메서드를 가진 내장/커스텀 @@iterator 객체를 통해 자료 구조에서 여러 값을 순회할 수 있음
