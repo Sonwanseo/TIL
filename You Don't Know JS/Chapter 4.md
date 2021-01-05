@@ -122,3 +122,194 @@ CoolGuy 클래스엔 생성자 CoolGuy()가 있어서 new CoolGuy()를 하면 �
 두 부모 클래스 모두 똑같은 이름의 메서드가 존재할 때 어느 부모 클래스의 메서드를 참조해야 하는 지가 문제
 
 자바스크립트는 한 마디로 '다중 상속' 기능 따위는 아예 처음부터 지원하지 않았음
+
+## 4.4. 믹스인
+
+자바스크립트 객체는 상속받거나 인스턴스화해도 자동으로 복사 작업이 일어나지는 않음
+쉽게 말하면 자바스크립트엔 인스턴스로 만들 '클래스'란 개념 자체가 없고 오직 객체만 존재
+그리고 객체는 다른 객체에 복사되는 게 아니라 서로 연결됨
+
+믹스인은 다른 언어와 달리 자바스크립트에선 누락된 클래스 복사 기능을 흉내낸 것
+- 명시적 믹스인
+- 암시적 믹스인
+
+### 4.4.1 명시적 믹스인
+
+```javascript
+function mixin(sourceObj, targetObj) {
+	for(var key in sourceObj) {
+		if(!(key in targetObj)) {
+			targetObj[key] = sourceObj[key];
+		}
+	}
+	return targetObj;
+}
+
+var Vehicle = {
+	engines: 1,
+	ignition: function() {
+		console.log("엔진을 켠다.");
+	},
+	drive: function() {
+		this.ignition();
+		console.log('방향을 맞추고 앞으로 간다!');
+	}
+}
+
+var Car = mixin(Vehicle, {
+	wheels: 4,
+	drive: function() {
+		Vehicle.drive.call(this);
+		console.log(this.wheels + "개의 바퀴로 굴러간다!");
+	}
+});
+```
+
+자바스크립트 엔진은 Vehicle의 작동을 Car로 알아서 복사하지 않으므로 일일이 수동으로 복사하는 유틸리티를 대신 작성하면 됨
+이런 유틸리티를 여러 자바스크립트 라이브러리와 프레임워크에서는 extend()라고 명명함
+
+이제 Car에는 Vehicle에서 복사한 프로퍼티와 함수 사본이 존재
+엄밀히 말해 함수가 실제로 복사된 것이 아니라 원본 함수를 가리키는 레퍼런스만 복사된 것
+
+##### 다형성 재고
+
+자바스크립트는 상대적 다형성을 제공하지 않음
+따라서 drive()란 이름의 함수가 Vehicle과 Car 양쪽에 모두 있을 때 이 둘을 구별해서 호출하려면 절대적인 레퍼런스를 이용할 수 밖에 없고 그래서 명시적으로 Vehicle 객체의 이름을 지정하여 drive() 함수를 호출(Vehicle.drive.call(this) 부분)
+
+상대적 다형성을 제공하는 클래스 지향 언어에서는 클래스가 정의되는 시점에 일단 Vehicle과 Car가 연결되면 이러한 관계를 모두 한곳에서 취합하여 관리
+
+하지만 자바스크립트는 매우 독특한 언어라 다형적 레퍼런스가 필요한 함수마다 명시적 의사다형성(저자만의 단어) 방식의 취약한 연결을 명시적으로 일일이 만들어줘야 함
+
+결과적으로 더 복잡하고 더 읽기 어렵고 더 관리하기 어려운 코드가 됨
+명시적 의사다형성은 아무리 봐도 장점보다는 비용이 훨씬 더 많이 들기 때문에 가능한 한 쓰지 않는 게 좋음
+
+##### 사본 혼합
+
+```javascript
+function mixin(sourceObj, targetObj) {
+	for(var key in sourceObj) {
+		if(!(key in targetObj)) {
+			targetObj[key] = sourceObj[key];
+		}
+	}
+	return targetObj;
+}
+```
+
+mixin() 함수는 sourceObj 프로퍼티를 순회하면서 targetObj에 같은 이름의 프로퍼티 유무를 체크하여 없으면 복사함
+초기 객체가 이미 존재하므로 복사 시 타깃 프로퍼티를 덮어쓰지 않게 조심해야 함
+
+일단 복사를 다 한 뒤에 Car에 특정한 내용만 구분하면 targetObj에 이런 체크 로직은 필요하지 않겠지만, 코드가 투박해지고 비효율적이라 이렇게 쓰지 않음
+
+복사가 끝나면 Car는 Vehicle과 별개로 동작
+Car에 프로퍼티를 추가해도 Vehicle엔 아무런 영향이 없고 그 반대 역시 마찬가지
+
+***실제로는 복사가 완료된 이후에도 공용 객체를 가리키는 레퍼런스는 둘 다 공유하므로 두 객체가 서로에게 미묘하게 영향을 줄 가능성은 존재***
+
+공용 함수의 레퍼런스는 두 객체 모두 같이 쓰기 때문에 수동으로 객체 간에 함수를 일일이 복사하더라도 다른 클래스 지향 언어처럼 100%[클래스 -> 인스턴스]의 복사는 어려움
+
+사실 자바스크립트 함수는 복사가 불가능
+복사되는 건 같은 공유 함수 객체를 가리키는 사본 레퍼런스임
+공유 함수 객체에 프로퍼티를 추가하는 등의 변경을 하면 공유 레퍼런스를 통해 Vehicle/Car 모두에게 영향을 끼침
+
+명시적 믹스인은 자바스크립트에서 쓸만한 장치이긴 하지만 보기보다 그다지 강력하지 않음
+실제로 어떤 개체에서 다른 객체로 프로퍼티를 복사하느니 차라리 그냥 무식하게 똑같은 프로퍼티를 각각 두 번씩 정의하는 편이 더 나음
+
+복수의 객체를 타깃 객체에 명시적으로 믹스인할 경우 부분적으로는 다중 상속을 흉내 낼 수 있지만 여러 소스에서 이름이 같은 메서드나 프로퍼티가 복사되면 충돌을 피할 뾰족한 대책이 없음
+
+명시적 믹스인은 코드 가독성에 도움이 될 때만 조심하여 사용하되 점점 코드가 추적하기 어려워지거나 불필요하고 난해한 객체 간 의존 관계가 양산될 기미가 보이면 사용을 중단해야 함
+
+##### 기생 상속
+
+'기생 상속'은 더글러스 크록포드가 작성한 명시적 믹스인 패턴의 변형으로 명시적/암시적 특징을 모두 갖고 있음
+
+```javascript
+function Vehicle() {
+	this.engines = 1;
+}
+Vehicle.prototype.ignition = function() {
+	console.log("엔진을 켠다.");
+}
+Vehicle.prototype.drive = function() {
+	this.ignition();
+	console.log("방향을 맞추고 앞으로 간다!");
+}
+
+function Car() {
+	// 자동차는 탈것의 하나다.
+	var car = new Vehicle();
+	
+	// 자동차에만 해당되는 내용은 수정한다.
+	car.wheels = 4;
+	
+	// 'Vehicle::drive()'를 가리키는 내부 레퍼런스를 저장한다.
+	var vehDrivie = car.drive;
+	
+	// 'Vehicle::drive()'를 오버라이드 한다.
+	car.drive = function() {
+		vehDrive.call(this);
+		console.log(this.wheels + "개의 바퀴로 굴러간다!");
+	}
+	return car;
+}
+
+var myCar = new Car();
+
+myCar.drive();
+// 엔진을 켠다.
+// 방향을 맞추고 앞으로 간다!
+// 4개의 바퀴로 굴러간다!
+```
+
+초기에 부모 클래스인 Vehicle의 정의를 복사하고 자식 클래스 정의에 믹스인한 뒤 조합된 객체 car를 자식 인스턴스로 넘김
+
+***new Car()를 호출하면 생성되는 새 객체는 Car의 this 레퍼런스로 참조할 수 있지만 이 객체는 사용하지 않고 자체 car 객체를 반환하기 때문에 처음에 생성된 개체는 간단히 무시된다. 따라서 Car()는 new 없이 호출해도 기능은 같으며 오히려 불필요한 객체 생성과 가비지 컬렉션을 줄일 수 있다.***
+
+### 4.4.2 암시적 믹스인
+
+암시적 믹스인은 앞서 설명한 명시적 의사다형성과 밀접한 관계가 있으므로 사용할 때 주의해야 함
+
+```javascript
+var Something = {
+	cool: function() {
+		this.greeting = "Hello World";
+		this.count = this.count ? this.count + 1 : 1;
+	}
+};
+Something.cool();
+Something.greeting; // "Hello WOrld"
+Something.count; // 1
+
+var Another = {
+	cool: function() {
+		// 'Something'을 암시적으로 'Another'로 믹스인한다.
+		Something.cool.call(this);
+	}
+};
+Another.cool();
+Another.greeting; // "Hello World";
+Another.count; // 1('Something'과 상태가 공유되지 않는다.)
+```
+
+가장 일반적인 생성자 호출 또는 메서드 호출 시 Something.cool.call(this)를 하면 Something.cool() 함수를 본질적으로 '빌려와서' Another 콘텍스트로 호출함
+결국, Something.cool()의 할당은 Something이 아닌 Another
+따라서 Something의 작동을 Another와 섞은 셈
+
+this 재바인딩을 십분 활용한 이런 유형의 테크닉은 Something.cool.call(this) 같은 호출이 상대적 레퍼런스가 되지 않아 불안정하므로 사용할 때 신중히 처리해야 함
+대부분은 깔끔하고 쉬운 코드를 유지하기 위해 쓰지 않는 편이 좋음
+
+## 4.5 정리하기
+
+클래스는 디자인 패턴의 일종
+많은 언어에서 클래스 지향 소프트웨어 디자인이 가능한 구문을 처음부터 제공하는데, 자바스크립트에도 역시 유사한 구문이 존재
+그러나 자바스크립트에서 클래스의 의미는 다른 언어들과 다름
+
+클래스는 복사를 의미
+전통적인 클래스는 인스턴스화하면 [클래스 -> 인스턴스]로 복사 발생
+클래스 역시 상속하면 [부모 -> 자식] 방향으로 복사됨
+
+자바스크립트는 객체 간 사본을 자동으로 생성하지 않음
+믹스인 패턴은 클래스의 복사 기능을 모방하기 위해 종종 쓰이지만 대부분 명시적 의사다형성처럼 보기 싫고 취약한 구문이 되어 가독성이 점점 더 떨어지고 유지 보수도 어려운 코드가 됨
+
+명시적 믹스인은 클래스의 복사 기능과 같지 않음
+이는 객체 그 자체가 아니라 단지 공유된 레퍼런스만 복사하기 때문
