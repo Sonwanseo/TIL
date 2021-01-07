@@ -167,3 +167,88 @@ Object.create가 새 객체를 다른 객체와 연결하기 위한 직접적인
 '차등 상속'이란 어떤 객체의 작동을 더 일반적인 객체와 비교했을 대 어느 부분이 다른지 기술하는 아이디어
 
 ### 5.2.2 생성자
+
+Foo.prototype 객체에는 기본적으로 열거 불가한 공용 프로퍼티 .constructor가 세팅되는데, 이는 객체 생성과 관련된 함수를 다시 참조하기 위한 레퍼런스임  
+마찬가지로 '생성자' 호출 new Foo()로 생성한 객체 a도 .constructor 프로퍼티를 갖고 있어서 '자신을 생성한 함수'를 가리킬 수 있음
+
+##### 생성자냐 호출이냐?
+
+Foo는 '생성자'가 아닌 그냥 여느 함수일 뿐임  
+함수는 결코 생성자가 아니지만, 그 앞에 new를 붙여 호출하는 순간 이 함수는 '생성자 호출'을 함  
+사실, new 키워드는 일반 함수 호출을 도중에 가로채어 원래 수행할 작업 외에 객체 생성이라는 잔업을 더 부과하는 지시자임
+
+```javascript
+function NothingSpecial() {
+  console.log("신경 쓰지 마!");
+}
+
+var a = new NothingSpecial();
+// "신경 쓰지 마!"
+
+a; // {}
+```
+
+NothingSpecial은 평범한 일반 함수지만, 이 함수를 new로 호출함으로써 객체가 생성되고 부수 효과로 생성된 객체를 변수 a에 할당함  
+이것을 생성자 호출이라고 하지만 NothingSpecial 함수 자체는 생성자가 아님  
+즉, 자바스크립트는 앞에 new를 붙여 호출한 함수를 모두 '생성자'라 할 수 있음  
+함수는 결코 생성자가 아니지만 new를 사용하여 호출할 때에만 '생성자 호출'임
+
+### 5.2.3 체계
+
+```javascript
+function Foo(name) {
+  this.name = name;
+}
+
+Foo.prototype.myName = function () {
+  return this.name;
+};
+
+var a = new Foo("a");
+var b = new Foo("b");
+
+a.myName(); // "a"
+b.myName(); // "b"
+```
+
+이 예제는 두 가지 '클래스 지향' 꼼수를 사용
+
+1. this.name = name 할당 시 .name 프로퍼티가 a, b 두 객체에 추가됨  
+   마치 클래스 인스턴스에서 데이터값을 캡슐화하는 모습처럼 보임
+
+2. Foo.prototype.myName = ... 부분이 아주 흥미로운 기법으로, 프로퍼티를 Foo.prototype 객체에 추가함
+   그래서 놀랍게도 a.myName()처럼 사용 가능
+
+a, b는 생성 직후 각자의 내부 [[Prototype]]이 foo.prototype에 링크됨  
+myName은 a, b에서 찾을 수 없으므로 위임을 통해 Foo.prototype에서 찾음
+
+##### 돌아온 '생성자'
+
+.constructor은 Foo.prototype에 위임한 레퍼런스로서 a.constructor는 Foo를 가리킴
+
+Foo에 의해 생성된 객체 a가 .constructor 프로퍼티를 통해 Foo에 접근할 수 있으나 이는 보안 측면에서는 바람직하지 않음
+
+1. Foo.prototype의 .constructor 프로퍼티는 기본으로 선언된 Foo 함수에 의해 생성된 객체에만 존재  
+   새로운 객체를 생성한 뒤 기본 .prototype 객체 레퍼런스를 변경하면 변경된 레퍼런스에도 .constructor가 따라붙진 않음
+
+```javascript
+function Foo() {
+  /* .. */
+}
+Foo.prototype = {
+  /* .. */
+}; // 새 프로토타입 객체를 생성한다.
+
+var a1 = new Foo();
+a1.constructor === Foo; // false!
+a1.constructor === Object; // true!
+```
+
+Foo()가 a1를 생성한 것으로 보이지만 사실 a1.constructor는 Foo가 아님
+
+a1에는 .constructor 프로퍼티가 없으므로 [[Prototype]] 연쇄를 따라 올라가 Foo.prototype 객체에 위임함  
+하지만 이 객체에도 .constructor 프로퍼티는 없으므로 계속 상위 객체로 위임하다가 결국 [[Prototype]] 연쇄 끝자락의 Object.prototype 객체에 이르게 됨  
+이 객체는 .constructor 프로퍼티를 갖고 있으니 결국 내장 Object() 함수를 가리키게 된 것
+
+또, .constructor는 불변 프로퍼티가 아님  
+열거 불가지만 값은 쓰기가 가능하며 게다가 [[Prototype]] 연쇄에 존재하는 'constructor'라는 이름의 프로퍼티를 추가하거나 다른 값으로 덮어쓰는 것도 가능
