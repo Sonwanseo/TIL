@@ -252,3 +252,5 @@ a1에는 .constructor 프로퍼티가 없으므로 [[Prototype]] 연쇄를 따�
 
 또, .constructor는 불변 프로퍼티가 아님  
 열거 불가지만 값은 쓰기가 가능하며 게다가 [[Prototype]] 연쇄에 존재하는 'constructor'라는 이름의 프로퍼티를 추가하거나 다른 값으로 덮어쓰는 것도 가능
+
+[[Get]] 알고리즘이 [[Prototype]] 연쇄를 순회하는 방식 탓에 곳곳에 널려있는 .constructor 프로퍼티가 애초 예상과는 전혀 다른 객체를 가리킬 수도 있음
