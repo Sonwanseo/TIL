@@ -254,3 +254,46 @@ a1에는 .constructor 프로퍼티가 없으므로 [[Prototype]] 연쇄를 따�
 열거 불가지만 값은 쓰기가 가능하며 게다가 [[Prototype]] 연쇄에 존재하는 'constructor'라는 이름의 프로퍼티를 추가하거나 다른 값으로 덮어쓰는 것도 가능
 
 [[Get]] 알고리즘이 [[Prototype]] 연쇄를 순회하는 방식 탓에 곳곳에 널려있는 .constructor 프로퍼티가 애초 예상과는 전혀 다른 객체를 가리킬 수도 있음
+
+결론적으로 a1.constructor 같은 임의의 객체 프로퍼티는 실제로 기본 함수를 참조하는 레퍼런스라는 보장이 전혀 없음  
+뭐 하나만 빠져도 a1.constructor는 전혀 엉뚱한 곳을 가리킬 가능성도 있음
+
+a1.constructor는 매우 불안정하고 신뢰할 수 없는 레퍼런스이므로 될 수 있는 대로 코드에서 직접 사용하지 않는 것이 좋음
+
+## 5.3 프로토타입 상속
+
+```javascript
+function Foo(name) {
+  this.name = name;
+}
+
+Foo.function.myName = function () {
+  return this.name;
+};
+
+function Bar(name, label) {
+  Foo.call(this.name);
+  this.label = labgel;
+}
+
+// 'Bar.prototype'를 'Foo.prototype'에 연결한다.
+Bar.prototype = Object.create(Foo.prototype);
+
+// 여기서 조심! 이제 Bar.prototype.constructor'은 사라졌으니
+// 이 프로퍼티에 의존하는 코드가 있다면 수동으로 일일이 '해결'해야 한다.
+
+Bar.prototype.myLabel = function () {
+  return this.label;
+};
+
+var a = new Bar("a", "obj a");
+
+a.myName(); // "a"
+a.myLabel(); // "obj a"
+```
+
+Object.create()를 실행하면 '새로운' 객체를 만들고 내부 [[Prototype]]을 지정한 객체에 링크함
+
+Bar() { } 함수를 선언하면 Bar는 여타 함수처럼 기본으로 .prototype 링크를 자신의 객체에 갖고 있음
+
+Bar.prototype = Foo.prototype처럼 할당한다고 Bar.prototype이 링크된 새로운 객체가 생성되진 않음
