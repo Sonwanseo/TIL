@@ -297,3 +297,10 @@ Object.create()를 실행하면 '새로운' 객체를 만들고 내부 [[Prototy
 Bar() { } 함수를 선언하면 Bar는 여타 함수처럼 기본으로 .prototype 링크를 자신의 객체에 갖고 있음
 
 Bar.prototype = Foo.prototype처럼 할당한다고 Bar.prototype이 링크된 새로운 객체가 생성되진 않음
+
+Bar.prototype = new Foo()로 할당하면 Foo.prototype과 링크된 새 객체가 생성되지만 그 과정에서 Foo()를 '생성자 호출' 함  
+Foo 함수 본문이 내부적인 부수 효과로 가득하다면 연결 고리가 성립되는 싲머에 이런 부수효과까지 함께 발생
+
+그러므로 Foo()의 부수 효과가 일어나지 않도록 Object.create()를 잘 사용해서 새로운 객체를 적절히 링크하여 생성해야 함
+
+ES6부터 Object.setPrototypeOf() 유틸리티가 도입되면서 예측 가능한 표준 방법으로 새로운 객체 링크가 가능
