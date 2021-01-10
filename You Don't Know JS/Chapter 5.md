@@ -304,3 +304,32 @@ Foo 함수 본문이 내부적인 부수 효과로 가득하다면 연결 고리
 그러므로 Foo()의 부수 효과가 일어나지 않도록 Object.create()를 잘 사용해서 새로운 객체를 적절히 링크하여 생성해야 함
 
 ES6부터 Object.setPrototypeOf() 유틸리티가 도입되면서 예측 가능한 표준 방법으로 새로운 객체 링크가 가능
+
+### 5.3.1 클래스 관계 조사
+
+전통적인 클래스 지향 언어에서는 인스턴스의 상속 계통을 살펴보는 것을 인트로스펙션(리플렉션)이라 함
+
+```javascript
+a instanceof Foo; // true
+```
+
+왼쪽에 일반 객체, 오른쪽에 함수를 피연산자로 둔 instanceof 연산자는 a의 [[Prototype]] 연쇄를 순회하면서 Foo.prototype가 가리키는 객체가 있는지 조사  
+2개의 객체가 있으면 instanceof 만으로는 두 객체가 서로 [[Prototype]] 연쇄를 통해 연결되어 있는지 전혀 알 수 없음
+
+**_내장 .bind() 유틸리티로 하드 바인딩 함수를 사용하면 .prototype 프로퍼티가 생기지 않는다. 이런 함수에 instanceof를 사용하면 하드 바인딩 함수의 출처인 대상 함수의 .prototype으로 대체된다. 하드 바인딩 함수를 써서 생성자를 호출하는 경우는 극히 드물지만 사용하면 원본 대상 함수를 대신 실행시키는 것과 같은 결과를 가져온다. 즉, 하드 바인딩 함수에 instanceof를 사용하면 원래 함수에 따라 작동한다._**
+
+[[Prototype]] 리플렉션을 확인할 수 있는 훌륭한 대안이 존재
+
+```javascript
+Foo.prototype.isPrototypeOf(a); // true
+```
+
+isPrototypeOf()는 'a의 전체 [[Prototype]] 연쇄에 Foo.prototype이 있는가'라는 질문에 대답  
+똑같은 원리지만 isPrototypeOf를 쓰면 간접적으로 참조할 함수의 .prototype 프로퍼티를 거치는 등의 잡다한 과정이 생략되는 장점이 존재
+
+ES5부터 지원하는 표준 메서드를 사용하면 다음고 같이 [[Prototype]]을 곧바로 조회 가능
+
+```javascript
+Object.getPrototypeOf(a);
+Object.getPrototypeOf(a) === Foo.prototype; // true
+```
