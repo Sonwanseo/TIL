@@ -3,13 +3,9 @@
   "version": "1.0.0",
   "description": "Learning Typescript by making a Blockchain with it",
   "main": "index.js",
+  "license": "MIT",
   "scripts": {
     "start": "node index.js",
     "prestart": "tsc index.ts"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "tsc": "^1.20150623.0"
   }
 }
